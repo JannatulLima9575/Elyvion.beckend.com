@@ -1,0 +1,539 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+
+model Project {
+  id              Int     @id @default(autoincrement())
+  projectName     String  @map("project_name")
+  marketID        Int     @map("market_id")
+  isUpdateWallet  Boolean @default(false) @map("is_update_wallet")
+  active          Boolean @default(true)
+  users           User[]
+  @@map("projects")
+}
+
+model SalesStatus {
+  id                Int     @id @default(autoincrement())
+  name              String
+  active            Boolean @default(true)
+  depositRecords    DepositRecord[]
+  withdrawals       Withdrawal[]
+  transactionRecords TransactionRecord[]
+  customerTasks     CustomerTask[]
+  @@map("sales_statuses")
+}
+
+model WithdrawalRejectReason {
+  id           Int          @id @default(autoincrement())
+  name         String
+  active       Boolean      @default(true)
+  withdrawals  Withdrawal[]
+  @@map("withdrawal_reject_reasons")
+}
+
+model Currency {
+  id                          Int     @id @default(autoincrement())
+  name                        String
+  code                        String
+  active                      Boolean @default(true)
+  isFiat                      Boolean @default(false) @map("is_fiat")
+  isDeposit                   Boolean @default(false) @map("is_deposit")
+  isWithdraw                  Boolean @default(false) @map("is_withdraw")
+  rateFromUSDT                Float?  @map("rate_from_usdt")
+  depositChargesPercentage    Float?  @map("deposit_charges_percentage")
+  withdrawalChargesPercentage  Float?  @map("withdrawal_charges_percentage")
+  rateFromFiat                Float?  @map("rate_from_fiat")
+  networkName                 String? @map("network_name")
+  rateToUSDT                  Float?  @map("rate_to_usdt")
+  @@map("currencies")
+}
+
+model AmbassadorLevel {
+  id                                  Int       @id @default(autoincrement())
+  ambassadorLevel                     Int       @map("ambassador_level")
+  ambassadorLevelName                 String    @map("ambassador_level_name")
+  requiredDirectReferrals            Int?      @map("required_direct_referrals")
+  requiredIndirectReferrals          Int?      @map("required_indirect_referrals")
+  requiredMemberTypeID               Int?      @map("required_member_type_id")
+  requiredMemberTypeReferrals        Int?      @map("required_member_type_referrals")
+  cashBonusGiven                     Float?    @map("cash_bonus_given")
+  packageBonusGiven                  Float?    @map("package_bonus_given")
+  weeklyIncentivePercentage          Float?    @map("weekly_incentive_percentage")
+  incentivePercentage                Float?    @map("incentive_percentage")
+  entitledMultipleLevels             Json?     @map("entitled_multiple_levels")
+  eachSetTaskNumber                  Int?      @map("each_set_task_number")
+  totalTaskSet                       Int?      @map("total_task_set")
+  comboTaskIncentivePercentage       Int?      @map("combo_task_incentive_percentage")
+  taskPriceRangeFrom                 Float?    @map("task_price_range_from")
+  taskPriceRangeTo                   Float?    @map("task_price_range_to")
+  minWithdrawalAmount                Float?    @map("min_withdrawal_amount")
+  maxWithdrawalAmount                Float?    @map("max_withdrawal_amount")
+  requiredTaskCountToWithdraw        Int?      @map("required_task_count_to_withdraw")
+  withdrawalFees                     Float?    @map("withdrawal_fees")
+  profitPriceRangeFrom               Float?    @map("profit_price_range_from")
+  profitPriceRangeTo                 Float?    @map("profit_price_range_to")
+  cappingProfitAmount               Float?    @map("capping_profit_amount")
+  minTotalSalesAmount               Float?    @map("min_total_sales_amount")
+  maxTotalSalesAmount               Float?    @map("max_total_sales_amount")
+  monthlyIncentivePercentage         Float?    @map("monthly_incentive_percentage")
+  isWaiveWithdrawalFees              Boolean?  @map("is_waive_withdrawal_fees")
+  entitledCommissionLevels          Json?     @map("entitled_commission_levels")
+  requiredMemberTypeAmbassadorLevelName String? @map("required_member_type_ambassador_level_name")
+  customers                          Customer[]
+  @@map("ambassador_levels")
+}
+
+// ---------- User (API: User.json) ----------
+
+model User {
+  id                    Int       @id @default(autoincrement())
+  userName              String    @map("user_name")
+  userID                Int       @unique @map("user_id")
+  password              String?   @map("password")
+  isAdmin               Boolean   @default(false) @map("is_admin")
+  isSupervisor          Boolean   @default(false) @map("is_supervisor")
+  projectID             Int?      @map("project_id")
+  projectName           String?   @map("project_name")
+  brand                 String?
+  isDisabled            Boolean   @default(false) @map("is_disabled")
+  createdBy             String?   @map("created_by")
+  createdDate           DateTime? @map("created_date")
+  updatedBy             String?   @map("updated_by")
+  updatedDate           DateTime? @map("updated_date")
+  totalExpensesAmount   Float?    @map("total_expenses_amount")
+  totalSalesAmount      Float?    @map("total_sales_amount")
+  totalThirdPartyAmount Float?    @map("total_third_party_amount")
+  convertedAmountList   Json?     @map("converted_amount_list")
+  totalPayoutAmount     Float?    @map("total_payout_amount")
+  totalPNLAmount        Float?    @map("total_pnl_amount")
+  agentCode             String?   @map("agent_code")
+  phoneNumber           String?   @map("phone_number")
+  waUrl                 String?   @map("wa_url")
+  telegramUrl           String?   @map("telegram_url")
+  isPopUpJoinGroup      Boolean   @default(false) @map("is_pop_up_join_group")
+  telegramUrl2          String?   @map("telegram_url2")
+  telegramUrl3          String?   @map("telegram_url3")
+  telegramUrl4          String?   @map("telegram_url4")
+  project               Project?  @relation(fields: [projectID], references: [id])
+  customers             Customer[]
+  customerTasks         CustomerTask[]
+  @@map("users")
+}
+
+// ---------- Customer (API: CustomerProfile.json, CustomerDetail.json) ----------
+
+model Customer {
+  id                                 Int       @id @default(autoincrement())
+  name                               String
+  loginUserName                      String?   @unique @map("login_user_name")
+  userID                             Int?      @map("user_id")
+  referrerCustomerID                 Int?      @map("referrer_customer_id")
+  recommendBy                        String?   @map("recommend_by")
+  phoneNumber                        String?   @map("phone_number")
+  nrc                                String?
+  referralCode                        String?   @map("referral_code")
+  referralCode2                      String?   @map("referral_code2")
+  birthday                           DateTime? @db.Date
+  email                              String?
+  numberCode                         String?   @map("number_code")
+  memberLevelID                      Int?      @map("member_level_id")
+  memberLevelName                    String?   @map("member_level_name")
+  memberTypeID                       Int?      @map("member_type_id")
+  memberTypeName                     String?   @map("member_type_name")
+  ambassadorLevelID                  Int?      @map("ambassador_level_id")
+  ambassadorLevel                     Int?      @map("ambassador_level")
+  ambassadorLevelName                String?   @map("ambassador_level_name")
+  genderID                           Int?      @map("gender_id")
+  genderName                         String?   @map("gender_name")
+  nationalityID                      Int?      @map("nationality_id")
+  nationalityName                    String?   @map("nationality_name")
+  locationID                         Int?      @map("location_id")
+  locationName                       String?   @map("location_name")
+  customerStatusID                   Int?      @map("customer_status_id")
+  customerStatusName                 String?   @map("customer_status_name")
+  customerGroupID                    Int?      @map("customer_group_id")
+  customerGroupName                  String?   @map("customer_group_name")
+  inquiryFromID                      Int?      @map("inquiry_from_id")
+  inquiryFromName                    String?   @map("inquiry_from_name")
+  assetBalance                       Float?    @map("asset_balance")
+  actualWalletBalance                Float?    @map("actual_wallet_balance")
+  totalProfit                        Float?    @map("total_profit")
+  totalDepositAmount                 Float?    @map("total_deposit_amount")
+  totalWithdrawalAmount              Float?    @map("total_withdrawal_amount")
+  totalPayoutAmount                  Float?    @map("total_payout_amount")
+  totalPNLAmount                     Float?    @map("total_pnl_amount")
+  totalSalesAmount                   Float?    @map("total_sales_amount")
+  totalSalesCount                    Int?      @map("total_sales_count")
+  totalWinCount                      Int?      @map("total_win_count")
+  winRate                            Float?    @map("win_rate")
+  rankingLevelID                     Int?      @map("ranking_level_id")
+  rankingLevelName                   String?   @map("ranking_level_name")
+  royaltyPoints                      Float?    @map("royalty_points")
+  teamSize                           Int?      @map("team_size")
+  creditScore                        Int?      @map("credit_score")
+  isVerified                         Boolean?  @map("is_verified")
+  isAgreedTerms                      Boolean?  @map("is_agreed_terms")
+  isForceUpdateBankDetails           Boolean?  @map("is_force_update_bank_details")
+  isCompanyAgent                     Boolean?  @default(false) @map("is_company_agent")
+  companyAgentCustomerID             Int?      @map("company_agent_customer_id")
+  companyAgentClientName             String?   @map("company_agent_client_name")
+  isFastKill                         Boolean?  @map("is_fast_kill")
+  isRepeatCustomer                   Boolean?  @map("is_repeat_customer")
+  isKYCVerified                      Boolean?  @map("is_kyc_verified")
+  isActualAccount                    Boolean?  @map("is_actual_account")
+  isAllowToTakeTask                  Boolean?  @map("is_allow_to_take_task")
+  isAllowToCompleteTask              Boolean?  @map("is_allow_to_complete_task")
+  isAllowToWithdraw                  Boolean?  @map("is_allow_to_withdraw")
+  isAllowToWithdrawWithoutTask       Boolean?  @map("is_allow_to_withdraw_without_task")
+  isAllowToWithdrawWhenPresetTask    Boolean?  @map("is_allow_to_withdraw_when_preset_task")
+  isAllowToUseReferralCode           Boolean?  @map("is_allow_to_use_referral_code")
+  isUnconditionalWithdrawalAllowed  Boolean?  @map("is_unconditional_withdrawal_allowed")
+  eachSetTaskNumber                  Int?      @map("each_set_task_number")
+  totalTaskSet                       Int?      @map("total_task_set")
+  totalSetDay                        Int?      @map("total_set_day")
+  currentTotalRoundNumber            Int?      @map("current_total_round_number")
+  currentTaskNumber                  Int?      @map("current_task_number")
+  todayTaskProfit                    Float?    @map("today_task_profit")
+  todayCompletedTaskCount            Int?      @map("today_completed_task_count")
+  todayCompletedTaskSetCount         Int?      @map("today_completed_task_set_count")
+  allTimeTaskProfit                  Float?    @map("all_time_task_profit")
+  allTimeLastTaskNumber              Int?      @map("all_time_last_task_number")
+  allTimeCompletedTaskCount          Int?      @map("all_time_completed_task_count")
+  todayLastTaskNumber                Int?      @map("today_last_task_number")
+  todayLastRoundNumber               Int?      @map("today_last_round_number")
+  todayRoundNumber                   Int?      @map("today_round_number")
+  currentPendingTaskProfit           Float?    @map("current_pending_task_profit")
+  withdrawalSetNumberString           String?   @map("withdrawal_set_number_string")
+  normalCommissionPercentage         Float?    @map("normal_commission_percentage")
+  packageCommissionPercentage        Float?    @map("package_commission_percentage")
+  ambassadorIncentivePercentage      Float?    @map("ambassador_incentive_percentage")
+  ambassadorIsWaiveWithdrawalFees     Boolean?  @map("ambassador_is_waive_withdrawal_fees")
+  nextAmbassadorLevelRequiredAmount  Float?    @map("next_ambassador_level_required_amount")
+  lastProfitAmount                   Float?    @map("last_profit_amount")
+  totalEstimatedDailyProfitAmount    Float?    @map("total_estimated_daily_profit_amount")
+  activePackageCount                 Int?      @map("active_package_count")
+  createdBy                          String?   @map("created_by")
+  createdDate                        DateTime? @map("created_date")
+  updatedBy                          String?   @map("updated_by")
+  updatedDate                        DateTime? @map("updated_date")
+  followUpDate                       DateTime? @map("follow_up_date") @db.Date
+  becomeAgentDate                    DateTime? @map("become_agent_date") @db.Date
+  autoSubscribePercentage            Float?    @map("auto_subscribe_percentage")
+  autoSubscribeDate                  DateTime? @map("auto_subscribe_date") @db.Date
+  latestCustomerTasklistUpdatedDate  DateTime? @map("latest_customer_tasklist_updated_date")
+  loginLogIPAddress                  String?   @map("login_log_ip_address")
+  loginLogCountry                    String?   @map("login_log_country")
+  loginLogCity                       String?   @map("login_log_city")
+  loginLogRegion                     String?   @map("login_log_region")
+  loginLogISP                        String?   @map("login_log_isp")
+  loginLogCreatedDate                DateTime? @map("login_log_created_date")
+  loginIsDisabled                    Boolean?  @map("login_is_disabled")
+  loginID                            Int?      @map("login_id")
+  loginPassword                      String?   @map("login_password")
+  withdrawalPassword                 String?   @map("withdrawal_password")
+  remark                             String?   @db.Text
+  manualBankName                     String?   @map("manual_bank_name")
+  bankAccount                        String?   @map("bank_account")
+  bankHolderName                     String?   @map("bank_holder_name")
+  bankVendorID                       Int?      @map("bank_vendor_id")
+  bankVendorName                     String?   @map("bank_vendor_name")
+  secondBankAccountNumber            String?   @map("second_bank_account_number")
+  secondOptionBankAccountHolderName  String?   @map("second_option_bank_account_holder_name")
+  withdrawalFullName                 String?   @map("withdrawal_full_name")
+  withdrawalWalletAddress            String?   @map("withdrawal_wallet_address")
+  withdrawalExchangeName             String?   @map("withdrawal_exchange_name")
+  withdrawalPhoneNumber              String?   @map("withdrawal_phone_number")
+  duplicateIPAddress                 String?   @map("duplicate_ip_address")
+  specificBrand                      String?   @map("specific_brand")
+  repeatCustomerLoginUserName        String?   @map("repeat_customer_login_user_name")
+  referrerCustomerLoginUserName      String?   @map("referrer_customer_login_user_name")
+  pendingKYCVerificationID           Int?      @map("pending_kyc_verification_id")
+  phoneNumberVerificationID          Int?      @map("phone_number_verification_id")
+  isPhoneNumberVerified             Boolean?  @map("is_phone_number_verified")
+  currentCappingAmount               Float?    @map("current_capping_amount")
+  maxCappingAmount                   Float?    @map("max_capping_amount")
+  currentPackageTransactionCount     Int?      @map("current_package_transaction_count")
+  currentPackageMaxCount             Int?      @map("current_package_max_count")
+  packageName                        String?   @map("package_name")
+  packageStartDate                   DateTime? @map("package_start_date") @db.Date
+  packageEndDate                     DateTime? @map("package_end_date") @db.Date
+  packageDayString                   String?   @map("package_day_string")
+  packageDateString                  String?   @map("package_date_string")
+  duplicateBankAccountNumber         String?   @map("duplicate_bank_account_number")
+  duplicateBankAccountHolderName     String?   @map("duplicate_bank_account_holder_name")
+  isValidToWithdraw                  Boolean?  @map("is_valid_to_withdraw")
+  isStickerDriver                    Boolean?  @map("is_sticker_driver")
+  isPayoutDaily                      Boolean?  @map("is_payout_daily")
+  isSalesInserted                    Boolean?  @map("is_sales_inserted")
+  isTestBonusGiven                   Boolean?  @map("is_test_bonus_given")
+  isTestBonusExpired                 Boolean?  @map("is_test_bonus_expired")
+  isValidDeposited                   Boolean?  @map("is_valid_deposited")
+  userName                           String?   @map("user_name")
+  taskProgress                       Json?     @map("task_progress")
+  taskDetails                        Json?     @map("task_details")
+  recommendCustomers                 Json?     @map("recommend_customers")
+  lastSalesRecords                   Json?     @map("last_sales_records")
+  lastPayoutRecords                  Json?     @map("last_payout_records")
+  wallets                            Json?
+  totalRowsCount                     Int?      @map("total_rows_count")
+  user                               User?     @relation(fields: [userID], references: [id])
+  referrer                           Customer? @relation("CustomerReferrer", fields: [referrerCustomerID], references: [id])
+  referrals                          Customer[] @relation("CustomerReferrer")
+  ambassadorLevelRef                 AmbassadorLevel? @relation(fields: [ambassadorLevelID], references: [id])
+  bankDetails                        CustomerBankDetail[]
+  depositRecords                     DepositRecord[]
+  withdrawals                        Withdrawal[]
+  transactionRecords                 TransactionRecord[]
+  customerTasks                      CustomerTask[]
+  @@map("customers")
+}
+
+// ---------- CustomerBankDetail (API: CustomerProfile.bankDetails[]) ----------
+
+model CustomerBankDetail {
+  id                              Int       @id @default(autoincrement())
+  customerID                      Int       @map("customer_id")
+  bankVendorID                    Int?      @map("bank_vendor_id")
+  bankVendorName                  String?   @map("bank_vendor_name")
+  bankAccountHolderName           String?   @map("bank_account_holder_name")
+  bankAccountNumber               String?   @map("bank_account_number")
+  secondBankAccountNumber         String?   @map("second_bank_account_number")
+  secondOptionBankVendorID        Int?      @map("second_option_bank_vendor_id")
+  secondOptionBankAccountHolderName String?  @map("second_option_bank_account_holder_name")
+  secondOptionBankAccountNumber   String?   @map("second_option_bank_account_number")
+  secondOptionSecondBankAccountNumber String? @map("second_option_second_bank_account_number")
+  secondOptionBankVendorName      String?   @map("second_option_bank_vendor_name")
+  manualBankName                  String?   @map("manual_bank_name")
+  active                          Boolean   @default(true)
+  customer                        Customer  @relation(fields: [customerID], references: [id], onDelete: Cascade)
+  withdrawals                     Withdrawal[]
+  @@map("customer_bank_details")
+}
+
+// ---------- DepositRecord (API: DepositRecords.json) ----------
+
+model DepositRecord {
+  id          Int          @id @default(autoincrement())
+  customerID  Int?         @map("customer_id")
+  amount      Float
+  statusID    Int          @map("status_id")
+  statusName  String?      @map("status_name")
+  createdDate DateTime?    @map("created_date")
+  numberCode  String?      @map("number_code")
+  customer    Customer?    @relation(fields: [customerID], references: [id])
+  status      SalesStatus  @relation(fields: [statusID], references: [id])
+  @@map("deposit_records")
+}
+
+// ---------- Withdrawal (API: Withdrawal.json) ----------
+
+model Withdrawal {
+  id                            Int       @id @default(autoincrement())
+  customerID                    Int       @map("customer_id")
+  clientName                    String    @map("client_name")
+  amount                        Float
+  statusID                      Int       @map("status_id")
+  statusName                    String    @map("status_name")
+  createdBy                     String?   @map("created_by")
+  createdDate                   DateTime? @map("created_date")
+  updatedBy                     String?   @map("updated_by")
+  updatedDate                   DateTime? @map("updated_date")
+  numberCode                    String?   @map("number_code")
+  loginUserName                 String?   @map("login_user_name")
+  fullName                      String?   @map("full_name")
+  walletAddress                 String?   @map("wallet_address")
+  exchangeName                  String?   @map("exchange_name")
+  phoneNumber                   String?   @map("phone_number")
+  bankVendorID                  Int?      @map("bank_vendor_id")
+  bankVendorName                String?   @map("bank_vendor_name")
+  bankAccountHolderName         String?   @map("bank_account_holder_name")
+  bankAccountNumber             String?   @map("bank_account_number")
+  thirdPartyID                  Int?      @map("third_party_id")
+  thirdPartyName                String?   @map("third_party_name")
+  companyAgentClientName        String?   @map("company_agent_client_name")
+  customerPhoneNumber           String?   @map("customer_phone_number")
+  approvedDate                  DateTime? @map("approved_date") @db.DateTime
+  memberTypeID                  Int?      @map("member_type_id")
+  memberTypeName                String?   @map("member_type_name")
+  charges                       Float?
+  finalAmount                   Float?    @map("final_amount")
+  rejectReasonID                Int?      @map("reject_reason_id")
+  rejectReasonName              String?   @map("reject_reason_name")
+  secondBankAccountNumber       String?   @map("second_bank_account_number")
+  manualBankName                String?   @map("manual_bank_name")
+  remark                        String?   @db.Text
+  assetBalance                  Float?    @map("asset_balance")
+  referrerCustomerLoginUserName String?   @map("referrer_customer_login_user_name")
+  isHideFrontend                Boolean?  @map("is_hide_frontend")
+  secondOptionBankAccountHolderName String? @map("second_option_bank_account_holder_name")
+  customerBankDetailID          Int?      @map("customer_bank_detail_id")
+  imageUrl                      Json?     @map("image_url")
+  isDuplicateBank               Boolean?  @map("is_duplicate_bank")
+  fiatCurrencyID                Int?      @map("fiat_currency_id")
+  fiatRate                      Float?    @map("fiat_rate")
+  fiatActualAmount              Float?    @map("fiat_actual_amount")
+  fiatCurrencyName              String?   @map("fiat_currency_name")
+  customer                      Customer  @relation(fields: [customerID], references: [id])
+  customerBankDetail            CustomerBankDetail? @relation(fields: [customerBankDetailID], references: [id])
+  status                        SalesStatus @relation(fields: [statusID], references: [id])
+  rejectReason                  WithdrawalRejectReason? @relation(fields: [rejectReasonID], references: [id])
+  @@map("withdrawals")
+}
+
+// ---------- WithdrawalRecord (API: WithdrawalRecords.json - summary list) ----------
+
+model WithdrawalRecord {
+  id          Int       @id @default(autoincrement())
+  amount      Float
+  statusName  String    @map("status_name")
+  createdDate DateTime? @map("created_date")
+  remark      String?   @db.Text
+  numberCode  String?   @map("number_code")
+  @@map("withdrawal_records")
+}
+
+// ---------- Tasklist (API: Tasklist.json) ----------
+
+model Tasklist {
+  id                Int       @id @default(autoincrement())
+  name              String
+  taskValue         Float     @map("task_value")
+  profit            Float?
+  commission        Float?
+  code              String
+  currentMeetAmount Float?    @map("current_meet_amount")
+  customerID       Int?      @map("customer_id")
+  imageUrl          String?   @map("image_url")
+  imagesUrl         Json?     @map("images_url")
+  milleage          Float?
+  itemYear          Int?      @map("item_year")
+  itemBrand         String?   @map("item_brand")
+  model             String?
+  categoryID        Int?      @map("category_id")
+  categoryName      String?   @map("category_name")
+  transactionRecords TransactionRecord[]
+  customerTasks     CustomerTask[]
+  @@map("tasklists")
+}
+
+// ---------- TransactionRecord (API: TransactionRecords.json) ----------
+
+model TransactionRecord {
+  id          Int          @id @default(autoincrement())
+  customerID  Int?         @map("customer_id")
+  taskID      Int?         @map("task_id")
+  clientName  String       @map("client_name")
+  taskName    String       @map("task_name")
+  taskValue   Float        @map("task_value")
+  profit      Float
+  commission  Float
+  code        String
+  statusID    Int          @map("status_id")
+  statusName  String       @map("status_name")
+  typeID      Int          @map("type_id")
+  imageUrl    String?      @map("image_url")
+  numberCode  String?      @map("number_code")
+  expiredDate DateTime?    @map("expired_date") @db.DateTime
+  isExpired   Boolean      @default(false) @map("is_expired")
+  customer    Customer?    @relation(fields: [customerID], references: [id])
+  task        Tasklist?    @relation(fields: [taskID], references: [id])
+  status      SalesStatus  @relation(fields: [statusID], references: [id])
+  @@map("transaction_records")
+}
+
+// ---------- CustomerTask (API: ByCustomerTask.json, PresetCustomerTasklist.json) ----------
+
+model CustomerTask {
+  id                          Int       @id @default(autoincrement())
+  customerID                  Int?      @map("customer_id")
+  taskID                      Int?      @map("task_id")
+  clientName                  String?   @map("client_name")
+  taskName                    String?   @map("task_name")
+  taskValue                   Float?    @map("task_value")
+  profit                      Float?
+  commissionPercentage        Float?    @map("commission_percentage")
+  code                        String?
+  taskNumber                  Int?      @map("task_number")
+  amount                      Float?
+  statusID                    Int?      @map("status_id")
+  statusName                  String?   @map("status_name")
+  maxTaskNumber               Int?      @map("max_task_number")
+  isPackage                   Boolean?  @map("is_package")
+  normalCommissionPercentage  Float?    @map("normal_commission_percentage")
+  packageCommissionPercentage Float?    @map("package_commission_percentage")
+  imageUrl                    String?   @map("image_url")
+  createdDate                 DateTime? @map("created_date")
+  createdBy                   String?   @map("created_by")
+  updatedDate                 DateTime? @map("updated_date")
+  updatedBy                   String?   @map("updated_by")
+  userID                      Int?      @map("user_id")
+  userName                    String?   @map("user_name")
+  numberCode                  String?   @map("number_code")
+  isCombo                     Boolean?  @map("is_combo")
+  roundNumber                 Int?      @map("round_number")
+  comboTasklistID             Int?      @map("combo_tasklist_id")
+  loginUserName               String?   @map("login_user_name")
+  isPreSet                    Boolean?  @map("is_pre_set")
+  totalRoundNumber            Int?      @map("total_round_number")
+  negativeAmountFrom          Float?    @map("negative_amount_from")
+  negativeAmountTo            Float?    @map("negative_amount_to")
+  dateLabel                   String?   @map("date_label")
+  categoryID                  Int?      @map("category_id")
+  categoryName                String?   @map("category_name")
+  latestTaskNumber            Int?      @map("latest_task_number")
+  bookingTypeName             String?   @map("booking_type_name")
+  goldenEggsAmount            Float?    @map("golden_eggs_amount")
+  isGoldenEgg                 Boolean?  @map("is_golden_egg")
+  goldenEggDetails            Json?     @map("golden_egg_details")
+  isGoldenEggOpened           Boolean?  @map("is_golden_egg_opened")
+  expiredDate                 DateTime? @map("expired_date") @db.DateTime
+  isExpired                   Boolean?  @map("is_expired")
+  goldenEggID                 Int?      @map("golden_egg_id")
+  walletBalance               Float?    @map("wallet_balance")
+  actualWalletBalance         Float?    @map("actual_wallet_balance")
+  currentTaskNumber           Int?      @map("current_task_number")
+  allTimeLastTaskNumber       Int?      @map("all_time_last_task_number")
+  currentPendingTaskProfit    Float?    @map("current_pending_task_profit")
+  customerCurrentTotalRoundNumber Int?   @map("customer_current_total_round_number")
+  customerNumberCode          String?   @map("customer_number_code")
+  isGoldenEggTask             Boolean?  @map("is_golden_egg_task")
+  count                       Int?
+  customer                    Customer? @relation(fields: [customerID], references: [id])
+  task                        Tasklist? @relation(fields: [taskID], references: [id])
+  user                        User?     @relation(fields: [userID], references: [id])
+  status                      SalesStatus? @relation(fields: [statusID], references: [id])
+  @@map("customer_tasks")
+}
+
+// ---------- DailyCheckInProgramDetail (API: DailyCheckInProgramDetails.json) ----------
+
+model DailyCheckInProgramDetail {
+  id                       Int       @id @default(autoincrement())
+  dayNumber                Int       @map("day_number")
+  bonusAmountGiven         Float?    @map("bonus_amount_given")
+  createdDate              DateTime? @map("created_date")
+  createdBy                String?   @map("created_by")
+  updatedDate              DateTime? @map("updated_date")
+  updatedBy                String?   @map("updated_by")
+  customerBonusAmountGiven Float?    @map("customer_bonus_amount_given")
+  @@map("daily_check_in_program_details")
+}
+
+// ---------- Menu (API: menu.json) ----------
+
+model Menu {
+  id               Int     @id @default(autoincrement())
+  name             String
+  active           Boolean @default(true)
+  isShowPending    Boolean @default(false) @map("is_show_pending")
+  pendingNumber    Int?    @map("pending_number")
+  isRing           Boolean @default(false) @map("is_ring")
+  menuSequence     Int     @map("menu_sequence")
+  isWithdrawalRing Boolean @default(false) @map("is_withdrawal_ring")
+  @@map("menus")
+}

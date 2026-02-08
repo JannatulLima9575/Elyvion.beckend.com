@@ -1,0 +1,29 @@
+{
+  "name": "giga-backend",
+  "version": "1.0.0",
+  "description": "Express.js + MySQL + Prisma API backend",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "create-admin": "node scripts/createAdmin.js"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "^7.3.0",
+    "@prisma/client": "^7.3.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.0",
+    "mariadb": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.0",
+    "nodemon": "^3.1.11",
+    "prisma": "^7.3.0"
+  }
+}
