@@ -1,8 +1,56 @@
+import createJWT from "../../auth/createJWT.mjs";
 import prisma from "../lib/prisma.js";
+import bcrypt from "bcryptjs";
+
+// Create new user
+export async function createUser(req, res, next) {
+  try {
+    const { userName, phoneNumber, password, gender, referral } = req.body;
+    console.log("nfdnfdsnfk");
+    
+    if (!userName || !phoneNumber || !password) {
+      return res.status(400).json({
+        success: false,
+        error: "Username, phone, and password are required",
+      });
+    }
+
+    // Check if username already exists
+    const existingUser = await prisma.customer.findFirst({ where: { userName } });
+    if (existingUser) {
+      return res.status(409).json({ success: false, error: "Username already exists" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Generate new userID
+    const maxUserID = await prisma.customer.aggregate({ _max: { userID: true } });
+    const newUserID = (maxUserID._max.userID || 0) + 1;
+
+    // Create user
+    const newUser = await prisma.customer.create({
+      data: {
+        userName,
+        phoneNumber,
+        password: hashedPassword,
+        userID: newUserID,
+        referralCode: referral || null,
+      },
+    });
+
+    res.json({
+      success: true,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 
 export async function getUsers(req, res, next) {
   try {
-    const users = await prisma.user.findMany({
+    const users = await prisma.customer.findMany({
       take: 50,
       orderBy: { id: "desc" },
     });
@@ -18,7 +66,7 @@ export async function getUserById(req, res, next) {
     if (isNaN(id)) {
       return res.status(400).json({ success: false, error: "Invalid user ID" });
     }
-    const user = await prisma.user.findUnique({
+    const user = await prisma.customer.findUnique({
       where: { id },
     });
     if (!user) {
@@ -33,55 +81,41 @@ export async function getUserById(req, res, next) {
 // User Login
 export async function loginUser(req, res, next) {
   try {
-    const { userName, password } = req.body;
-    console.log("userName",userName,password);
+    const { name, password } = req.body;
+    console.log("userName",name,password);
     
 
-    if (!userName || !password) {
+    if (!name || !password) {
       return res.status(400).json({
         success: false,
         error: "userName and password are required",
       });
     }
 
-    let user = await prisma.user.findFirst({
+    let user = await prisma.customer.findFirst({
       where: {
-        userName: userName,
+        userName: name,
       },
     });
 
-    const maxUserID = await prisma.user.aggregate({
-  _max: { userID: true },
-});
-const newUserID = (maxUserID._max.userID || 0) + 1;
 
-        // If user doesn't exist, create one automatically
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          userName,
-          password, // in production, hash the password!
-          isAdmin: true,
-          userID: newUserID,
-        },
-      });
-      console.log("New user created:", user.userName);
-    }
-
-/*     if (!user) {
       return res.status(401).json({
         success: false,
         error: "Invalid credentials",
       });
-    } */
+    } 
 
     // Simple password check (in production, use proper hashing)
-/*     if (user.password !== password) {
+    const passwordMatch = await bcrypt.compare(password, user.password);
+     if (!passwordMatch) {
       return res.status(401).json({
         success: false,
         error: "Invalid credentials",
       });
-    } */
+    } 
+
+    const result = await createJWT(res,user);
 
     // Return user data (without password)
     const { password: _, ...userWithoutPassword } = user;
@@ -89,7 +123,7 @@ const newUserID = (maxUserID._max.userID || 0) + 1;
     res.json({
       success: true,
       data: userWithoutPassword,
-      token: "dummy-token", // In production, generate JWT token
+      token: result.token,
     });
   } catch (err) {
     next(err);

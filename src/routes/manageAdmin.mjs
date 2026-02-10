@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { getUsers, getUserById, loginUser } from "../controllers/userController.js";
+import { changePassword,updateAdmin,loginAdmin,getAdmin } from "../controllers/AminController.mjs";
 
 const router = Router();
-router.post("/login", loginUser);
-router.get("/", getUsers);
-router.get("/:id", getUserById);
+router.post("/login", loginAdmin);
+router.get("/", getAdmin);
+router.put("/update", updateAdmin);
+router.put("/change-password", changePassword);
 
 export default router;

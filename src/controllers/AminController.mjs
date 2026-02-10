@@ -1,3 +1,4 @@
+import createJWT from "../../auth/createJWT.mjs";
 import prisma from "../lib/prisma.js";
 
 export async function getAdmin(req, res, next) {

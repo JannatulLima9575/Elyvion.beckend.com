@@ -148,7 +148,7 @@ export async function getCustomers(req, res, next) {
       createdDateTo,
       startDate,
       endDate,
-      loginUserName,
+      UserName,
       code,
       ipAddress,
       phoneNumber,
@@ -177,8 +177,8 @@ export async function getCustomers(req, res, next) {
     }
 
     // Add other filters
-    if (loginUserName) {
-      where.loginUserName = { contains: loginUserName, mode: 'insensitive' };
+    if (UserName) {
+      where.UserName = { contains: UserName, mode: 'insensitive' };
     }
     if (code) {
       where.numberCode = { contains: code, mode: 'insensitive' };
@@ -193,17 +193,17 @@ export async function getCustomers(req, res, next) {
       where.customerStatusID = parseInt(customerStatus, 10);
     }
 
+    console.log("Filters applied:", where);
+
     const customers = await prisma.customer.findMany({
-      where,
       include: {
         bankDetails: true,
-        user: true,
-        ambassadorLevelRef: true,
       },
       orderBy: { createdDate: "desc" },
       take: parseInt(limit, 10),
     });
-
+     
+    console.log(customers)
     // Format response to match CustomerDetail.json structure
     const formatted = customers.map((customer) => formatCustomerDetail(customer));
 
